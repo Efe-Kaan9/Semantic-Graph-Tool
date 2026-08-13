@@ -52,6 +52,26 @@ When an LLM queries this MCP server, the following happens under the hood:
    ```
    *Make sure to update the absolute paths for the `command` and `args` to match where you cloned this repository.*
 
+## Recommended LLM System Prompt / Rules
+
+To get the absolute best performance out of the Semantic Graph MCP Server, we highly recommend adding the following rules to your AI agent's Custom Instructions, `Rules.md`, or `skills.md` file:
+
+```markdown
+## Codebase Navigation (MCP Tools First)
+
+**Use semantic graph tools before brute force. Do not guess.**
+
+When navigating the codebase, understanding architecture, or finding definitions, you MUST prioritize the Semantic Graph MCP Server over native terminal commands.
+
+- ALWAYS use `search_codebase` first to find exact `node_id`s. Do not guess, fabricate, or hallucinate IDs.
+- NEVER use native search (`grep`, `PowerShell`, native file reading) to find functions or classes initially.
+- Use `explore_graph` to understand dependencies (callers/callees) BEFORE reading files manually to understand the blast radius.
+- Use `get_structural_insights` for dead code or orphan method analysis. Do not manually read files to find dead code.
+- Use `visualize_graph` whenever the user asks for a visual, Mermaid, or diagram of the codebase.
+- **STRICT MERMAID BAN:** You are STRICTLY FORBIDDEN from manually writing or authoring `mermaid` blocks based on your own code analysis. Your manual analysis is prone to missing topological edges. Whenever a visual, graph, or diagram is requested, you MUST call the `visualize_graph` MCP tool and simply output the exact string it returns. Do not invent the graph yourself.
+- **Fallback:** Only if the MCP tools explicitly fail or return empty results are you allowed to fall back to native terminal/file-reading tools.
+```
+
 ## ⚠️ Disclaimer & Liability
 
 This tool automatically parses your codebase and generates vector embeddings and SQLite databases using Tree-sitter and ChromaDB.
