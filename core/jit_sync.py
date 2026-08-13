@@ -26,7 +26,14 @@ from pathlib import Path
 from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 
 from core.database import CodeGraphDB
-from extractors.python_extractor import PythonExtractor
+from models import BaseExtractor
+from extractors import (
+    PythonExtractor,
+    JavaCSharpExtractor,
+    JSTSExtractor,
+    CppExtractor,
+    HtmlCssExtractor,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +54,13 @@ _IGNORED_DIRS: FrozenSet[str] = frozenset({
 })
 
 #: Extensions that the current extractor fleet can handle.
-_SUPPORTED_EXTENSIONS: FrozenSet[str] = frozenset({".py"})
+_SUPPORTED_EXTENSIONS: FrozenSet[str] = frozenset({
+    ".py",
+    ".java", ".cs",
+    ".js", ".jsx", ".ts", ".tsx",
+    ".c", ".cpp", ".h", ".hpp", ".cc", ".cxx",
+    ".html", ".htm", ".css",
+})
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -112,11 +125,22 @@ class JITSyncManager:
         logger.info("JITSyncManager root: %s", self._root)
         logger.info("JITSyncManager registry: %s", self._registry_path)
 
+        # Initialize all available extractors
+        extractor_instances = [
+            PythonExtractor(self._root),
+            JavaCSharpExtractor(self._root),
+            JSTSExtractor(self._root),
+            CppExtractor(self._root),
+            HtmlCssExtractor(self._root),
+        ]
+        
         # Extractor fleet — keyed by extension
-        self._extractors: Dict[str, PythonExtractor] = {
-            ext: PythonExtractor(self._root)
-            for ext in _SUPPORTED_EXTENSIONS
-        }
+        self._extractors: Dict[str, BaseExtractor] = {}
+        for ext in _SUPPORTED_EXTENSIONS:
+            for ext_inst in extractor_instances:
+                if ext in ext_inst.supported_extensions:
+                    self._extractors[ext] = ext_inst
+                    break
 
         # In-memory registry:  abs_path_str -> mtime (float)
         self._registry: Dict[str, float] = self._load_registry()

@@ -29,7 +29,8 @@ venv/
 
 # Semantic Graph Storage
 .code_graph/
-.test_*_workspace/
+.test_*
+.enterprise_sim/
 
 # IDEs
 .idea/
