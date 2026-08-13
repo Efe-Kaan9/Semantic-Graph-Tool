@@ -64,7 +64,7 @@ class JSTSExtractor(AbstractTreeSitterExtractor):
         for node in self._walk_bfs(root):
             if node.type in ("class_declaration", "interface_declaration", "type_alias_declaration"):
                 self._extract_class_like(node, file_path, module_id, code_bytes, nodes, edges)
-            elif node.type in ("function_declaration", "method_definition", "arrow_function", "function"):
+            elif node.type in ("function_declaration", "method_definition", "arrow_function", "function", "function_expression"):
                 self._extract_function(node, file_path, module_id, code_bytes, nodes, edges)
             
             if node.type == "call_expression":
@@ -125,10 +125,16 @@ class JSTSExtractor(AbstractTreeSitterExtractor):
 
     def _extract_function(self, node: Node, file_path: Path, module_id: str, code_bytes: bytes, nodes: list, edges: list):
         name = None
-        if node.type in ("function_declaration", "method_definition", "function"):
+        if node.type in ("function_declaration", "method_definition", "function", "function_expression"):
             name_node = node.child_by_field_name("name")
             if name_node:
                 name = self._get_node_text(name_node, code_bytes)
+            else:
+                # Fallback for named function expressions if field name is not standard
+                for child in node.children:
+                    if child.type == "identifier":
+                        name = self._get_node_text(child, code_bytes)
+                        break
                 
         elif node.type == "arrow_function":
             # Check if assigned to a variable
@@ -142,8 +148,12 @@ class JSTSExtractor(AbstractTreeSitterExtractor):
                 # Anonymous callback
                 name = f"anon_func_L{node.start_point[0] + 1}_C{node.start_point[1]}"
 
+            if not name:
+                name = f"anon_func_L{node.start_point[0] + 1}_C{node.start_point[1]}"
+
+        # Fallback for anonymous functions that didn't match arrow_function block but are just "function"
         if not name:
-            return
+            name = f"anon_func_L{node.start_point[0] + 1}_C{node.start_point[1]}"
 
         scope = self._get_enclosing_scope(node, code_bytes)
         scope_name = scope[1] if scope else None
@@ -178,7 +188,7 @@ class JSTSExtractor(AbstractTreeSitterExtractor):
         current = node.parent
         caller_id = module_id
         while current:
-            if current.type in ("function_declaration", "method_definition", "arrow_function", "function"):
+            if current.type in ("function_declaration", "method_definition", "arrow_function", "function", "function_expression"):
                 name = None
                 if current.type != "arrow_function":
                     n_node = current.child_by_field_name("name")
