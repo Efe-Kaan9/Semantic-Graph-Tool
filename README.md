@@ -13,6 +13,15 @@ This project was built as a portfolio piece and is open-sourced for anyone who m
 - **Structural Insights**: Finds dead code (orphan methods), highly connected nodes, and circular dependencies (`get_structural_insights`).
 - **JIT Sync**: Automatically detects file changes and updates the graph instantly before every query.
 
+## How it Works
+
+When an LLM queries this MCP server, the following happens under the hood:
+1. **Multi-Language Parsing**: Uses **Tree-sitter** to parse the target codebase. Supports Python, Java, C#, JavaScript, TypeScript, C, C++, HTML, and CSS.
+2. **Scope Isolation (BFS)**: Traverses the AST (Abstract Syntax Tree) using a Breadth-First Search (BFS) approach. This guarantees that nested scopes (like inner classes or closures) are perfectly isolated and attributed to their parent nodes.
+3. **Dual Storage Architecture**:
+   - **ChromaDB**: Converts code nodes into vector embeddings for powerful semantic search (e.g. searching for "user authentication logic" finds the exact method, regardless of its name).
+   - **NetworkX & SQLite**: Stores the structural edges (who calls who, what class contains what method). This is used for precise graph exploration and generating visual Mermaid diagrams.
+
 ## Setup
 
 1. **Create a virtual environment and install dependencies**:
