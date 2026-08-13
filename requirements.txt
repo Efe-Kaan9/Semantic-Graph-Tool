@@ -1,0 +1,10 @@
+# ── Phase 2 ──
+tree-sitter>=0.24.0
+tree-sitter-python>=0.23.0
+
+# ── Phase 3 (pre-listed, installed later) ──
+networkx>=3.0
+chromadb>=1.0.0
+
+# ── Phase 5 (pre-listed, installed later) ──
+mcp>=1.0.0
